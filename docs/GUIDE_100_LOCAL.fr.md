@@ -226,9 +226,86 @@ Lorsque votre épisode est terminé et que tous vos plans sont validés sur la t
 
 ---
 
+## ⚙️ Configuration Indispensable : Rendre les Moteurs Locaux Utilisables par Docker
+
+Pour que les services locaux (Ollama, ComfyUI, Kokoro) puissent communiquer sans accroc avec ArcReel exécuté sous Docker, voici les **règles d'or techniques** à respecter impérativement :
+
+### 1. Le pont réseau `host.docker.internal` (Pourquoi `localhost` ne fonctionne pas)
+* **Le problème :** À l'intérieur d'un conteneur Docker, `localhost` (ou `127.0.0.1`) fait référence au conteneur lui-même, et non à votre Mac. Si vous écrivez `http://localhost:11434`, ArcReel cherche Ollama à l'intérieur du conteneur et échoue avec `Connection refused`.
+* **La solution :** Utilisez toujours le nom de domaine spécial **`host.docker.internal`** dans les URLs de vos fournisseurs dans ArcReel :
+  * Ollama : `http://host.docker.internal:11434/v1`
+  * ComfyUI : `http://host.docker.internal:8188`
+  * Kokoro : `http://host.docker.internal:8880/v1`
+
+---
+
+### 2. Ouvrir Ollama aux connexions Docker (`OLLAMA_HOST=0.0.0.0`)
+* **Le piège :** Par défaut sur macOS, l'application Ollama écoute exclusivement sur `127.0.0.1`. Comme les requêtes de Docker arrivent depuis le sous-réseau interne de la machine virtuelle Docker (ex: `192.168.65.x`), macOS bloque la connexion par sécurité.
+* **La solution obligatoire :**
+  Démarrez Ollama avec la variable `OLLAMA_HOST="0.0.0.0:11434"` :
+  ```bash
+  OLLAMA_HOST=0.0.0.0:11434 ollama serve
+  ```
+  > **💡 Astuce permanente sur Mac :** Pour que l'application Ollama.app écoute toujours sur `0.0.0.0` même lancée via le menu, tapez une fois dans votre terminal :
+  > ```bash
+  > launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+  > ```
+  > Puis relancez Ollama.
+
+---
+
+### 3. La règle d'or ComfyUI dans ArcReel (Éviter l'erreur *« Au moins un modèle doit être activé »*)
+* **Le piège :** ComfyUI n'a pas d'API de découverte de modèles standard (`/v1/models`). Dans ArcReel, **un modèle = un fichier workflow importé**. Si vous essayez d'enregistrer le fournisseur ComfyUI sans avoir de modèle attaché, l'enregistrement échoue.
+* **L'ordre obligatoire à respecter :**
+  1. Dans ComfyUI, faire **« Export (API) »** (et non l'export classique de graphe) pour obtenir le fichier JSON avec les identifiants de nœuds.
+  2. Dans ArcReel, aller **D'ABORD** dans **Paramètres > Points de terminaison (Endpoints)** et cliquer sur **« Importer un workflow API »**.
+  3. **ENSUITE SEULEMENT**, aller dans **Paramètres > Fournisseurs > ComfyUI Local**, cliquer sur `+` (Ajouter un modèle manuellement), sélectionner le point de terminaison nouvellement importé et **cocher sa case**.
+  4. Enregistrer : l'erreur disparaît.
+
+---
+
+### 4. Le démarrage de Kokoro-TTS (Éviter l'erreur `Connection reset`)
+* **Le piège :** Au tout premier lancement ou après un redémarrage, Kokoro charge en mémoire ses poids de synthèse vocale ONNX (cold start d'environ 5 à 10 secondes). Si vous envoyez une requête ou testez la connexion immédiatement, le serveur réinitialise la socket avec `curl: (56) Recv failure: Connection reset`.
+* **La solution :**
+  Vérifiez les journaux du conteneur avant de tester :
+  ```bash
+  docker logs kokoro-tts
+  ```
+  Dès que vous voyez `INFO: Application startup complete`, le service est prêt à synthétiser des voix à pleine vitesse.
+
+---
+
+### 5. Gestion de la mémoire unifiée sur Apple Silicon (18 Go de RAM)
+* **Les modèles légers recommandés :**
+  * Texte : **Qwen 2.5 7B** (~4,7 Go) ou **Mistral 7B** (~4,3 Go)
+  * Image : **SDXL Turbo** (~6,46 Go)
+  * Voix : **Kokoro-82M** (~300 Mo)
+  * Vidéo : **LTXV Image-to-Video** (~5,9 Go)
+* **Les modèles à éviter sur une machine de 18 Go :**
+  * Évitez les modèles bruts de plus de 15-20 Go comme *MOSS-Image* (21 Go) ou *MiniMax H3* (53 Go) dans ComfyUI, car ils déclencheront du swap mémoire intensif et gèleront votre machine. Privilégiez toujours les variantes distillées ou quantifiées.
+
+---
+
+## 🚀 Démarrage en 1 clic (Script automatique)
+
+Pour vous éviter de lancer chaque service manuellement dans des terminaux séparés à chaque session de travail, le projet inclut un script d'automatisation complet :
+
+```bash
+bash scripts/start-local-studio.sh
+```
+
+Ce script vérifie et démarre automatiquement dans l'ordre :
+1. ✅ **Docker Desktop**
+2. ✍️ **Ollama** configuré sur `0.0.0.0:11434`
+3. 🎙️ **Kokoro-TTS** (démarre le conteneur Docker sur le port 8880)
+4. 🎨 **Comfy Desktop** sur le port 8188
+5. 🖥️ **ArcReel** (lance la stack Docker de production sur le port 1241)
+
+---
+
 ## 🌐 Tableau Récapitulatif des Connexions Réseau (Docker)
 
-Comme ArcReel s'exécute à l'intérieur d'un conteneur Docker, il doit communiquer avec les services qui tournent sur votre machine hôte (Mac) via l'adresse spéciale **`host.docker.internal`** :
+Comme ArcReel s'exécute à l'intérieur d'un conteneur Docker, il communique avec les services hôtes via **`host.docker.internal`** :
 
 | Service | Port sur le Mac | Adresse configurée dans ArcReel | Protocole ArcReel |
 | :--- | :--- | :--- | :--- |
@@ -236,13 +313,17 @@ Comme ArcReel s'exécute à l'intérieur d'un conteneur Docker, il doit communiq
 | **🎨 ComfyUI (Images)** | `8188` | `http://host.docker.internal:8188` | `comfyui` |
 | **🎙️ Kokoro (Audio)** | `8880` | `http://host.docker.internal:8880/v1` | `OpenAI` |
 | **🎬 ComfyUI (Vidéo)** | `8188` | `http://host.docker.internal:8188` | `comfyui` |
-| **🖥️ ArcReel Web UI** | `1241` | `http://localhost:1241` (dans Safari/Chrome) | HTTP |
+| **🖥️ ArcReel Web UI** | `1241` | `http://localhost:1241` (dans Safari/Chrome) | HTTP Web |
 
 ---
 
 ## 🛠️ Commandes Utiles & Maintenance
 
-* **Redémarrer le serveur ArcReel :**
+* **Démarrer tout le studio en 1 clic :**
+  ```bash
+  bash scripts/start-local-studio.sh
+  ```
+* **Redémarrer le serveur ArcReel uniquement :**
   ```bash
   cd deploy/production && docker compose restart arcreel
   ```
@@ -254,7 +335,7 @@ Comme ArcReel s'exécute à l'intérieur d'un conteneur Docker, il doit communiq
   ```bash
   curl http://localhost:11434/api/tags
   ```
-* **Reconstruire ArcReel après une mise à jour :**
+* **Reconstruire ArcReel après une modification de code ou de traduction :**
   ```bash
   cd deploy/production && docker compose up -d --build
   ```
