@@ -34,6 +34,8 @@
 <p align="center">
   <a href="#démarrage-rapide"><strong>Démarrage rapide</strong></a>
   ·
+  <a href="docs/GUIDE_100_LOCAL.fr.md"><strong>Guide Studio 100% Local</strong></a>
+  ·
   <a href="https://docs.arc-reel.com/guide/getting-started">Guide de prise en main</a>
   ·
   <a href="https://docs.arc-reel.com/">Documentation complète</a>
