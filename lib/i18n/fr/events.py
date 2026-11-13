@@ -1,0 +1,31 @@
+"""French labels for project change events."""
+
+MESSAGES = {
+    "event_label_grid": 'Storyboard multi-grille "{id}"',
+    "event_label_grid_split": 'Division du storyboard multi-grille "{id}"',
+    "event_label_voice_sample": 'Aperçu vocal pour "{id}"',
+    "event_label_asset_image_character": 'Image de ressource pour le personnage "{id}"',
+    "event_label_asset_image_scene": 'Image de ressource pour le décor "{id}"',
+    "event_label_asset_image_prop": 'Image de ressource pour l\'accessoire "{id}"',
+    "event_label_asset_image_product": 'Image de ressource pour le produit "{id}"',
+    "event_label_asset_image_character_derivative": 'Image de ressource pour la variante de personnage "{id}"',
+    "event_label_skeleton_segments": 'Segment "{id}"',
+    "event_label_skeleton_scenes": 'Scène "{id}"',
+    "event_label_skeleton_shots": 'Plan "{id}"',
+    "event_label_skeleton_video_units": 'Unité vidéo "{id}"',
+    "event_label_narration_audio": 'Audio de narration "{id}"',
+    "event_label_named_entity_character": 'Personnage "{id}"',
+    "event_label_named_entity_scene": 'Scène "{id}"',
+    "event_label_named_entity_prop": 'Accessoire "{id}"',
+    "event_label_named_entity_product": 'Produit "{id}"',
+    "event_label_named_entity_character_derivative": 'Variante de personnage "{id}"',
+    "event_label_character_reference_audio": 'Audio de référence pour le personnage "{id}"',
+    "event_label_project_settings": "Paramètres du projet",
+    "event_label_overview": "Vue d'ensemble du projet",
+    "event_label_episode": "Épisode (id={episode})",
+    "event_label_draft_normalized_script": "Scénario normalisé pour l'épisode (id={episode})",
+    "event_label_draft_segment_splitting": "Découpage en segments pour l'épisode (id={episode})",
+    "event_label_draft_script_plan": "Brouillon de plan de script pour l'épisode (id={episode})",
+    "event_label_draft_prompt_authoring": "Brouillon de rédaction de prompts pour l'épisode (id={episode})",
+}
+

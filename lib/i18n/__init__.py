@@ -13,6 +13,14 @@ from .en import providers as en_providers
 from .en import system as en_system
 from .en import templates as en_templates
 from .en import validation as en_validation
+from .fr import assets as fr_assets
+from .fr import emails as fr_emails
+from .fr import errors as fr_errors
+from .fr import events as fr_events
+from .fr import providers as fr_providers
+from .fr import system as fr_system
+from .fr import templates as fr_templates
+from .fr import validation as fr_validation
 from .ru import assets as ru_assets
 from .ru import emails as ru_emails
 from .ru import errors as ru_errors
@@ -42,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # Default locale
 DEFAULT_LOCALE = "zh"
-SUPPORTED_LOCALES = ["zh", "en", "vi", "ru"]
+SUPPORTED_LOCALES = ["zh", "en", "vi", "ru", "fr"]
 
 # Mapping from locale code to human-readable language name
 LOCALE_LANGUAGE_MAP: dict[str, str] = {
@@ -50,6 +58,7 @@ LOCALE_LANGUAGE_MAP: dict[str, str] = {
     "en": "English",
     "vi": "Tiếng Việt",
     "ru": "Русский",
+    "fr": "Français",
 }
 
 # Merged message dictionary
@@ -93,6 +102,16 @@ MESSAGES: dict[str, dict[str, str]] = {
         **ru_templates.MESSAGES,
         **ru_assets.MESSAGES,
         **ru_validation.MESSAGES,
+    },
+    "fr": {
+        **fr_errors.MESSAGES,
+        **fr_events.MESSAGES,
+        **fr_system.MESSAGES,
+        **fr_emails.MESSAGES,
+        **fr_providers.MESSAGES,
+        **fr_templates.MESSAGES,
+        **fr_assets.MESSAGES,
+        **fr_validation.MESSAGES,
     },
 }
 
